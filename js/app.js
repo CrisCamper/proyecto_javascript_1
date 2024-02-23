@@ -1,6 +1,7 @@
-document.addEventListener("DOMContentLoaded", () => {
-
-    loadClients();
-    loadClientsForm();
-
+document.addEventListener('DOMContentLoaded',()=>{
+    cargarClientes();
+    cargarFormularioClientes();
+    
+    cargarProductos();
+    cargarFormularioProductos();
 })
