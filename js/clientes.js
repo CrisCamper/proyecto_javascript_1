@@ -56,6 +56,8 @@ const crearCliente = () => {
     alert('Cliente creado con éxito!');
     console.log(listaClientes);
 
+    actulizarClientesEnFacturas();
+
     return nuevoCliente;
 
 }

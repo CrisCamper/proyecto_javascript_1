@@ -4,4 +4,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     
     cargarProductos();
     cargarFormularioProductos();
-})
+
+
+    cargarFormularioFacturas();
+})  
