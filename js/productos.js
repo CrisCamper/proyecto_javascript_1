@@ -1,171 +1,148 @@
 const listaProductos = [];
 
-const cargarProductos = () => {
-    for (let i = 0; i <= 10; i++) {
-        const nuevoProducto = {
-            id: i,
-            nombre: faker.commerce.productName(),
-            descripcion: faker.commerce.productName(),
-            precio: parseFloat(faker.commerce.price(10, 100, 2)),
-        };
-        listaProductos.push(nuevoProducto);
+
+const loadProductos= async()=>{
+    try{
+
+        listaProductos.length=0;
+        const respuesta=await fetch('http://localhost:3000/productos');
+
+        if(!respuesta.ok){
+           throw new Error('Error al cargar clientes. Estado: ',respuesta.status);
+        }
+        const productos=await respuesta.json();
+        listaProductos.push(...productos);
+
+    }catch(error){
+        console.error("Error al cargar clientes",error.message);
     }
 }
 
-const cargarFormularioProductos = () => {
+const guardarProducto= async(nuevoProducto)=>{
+    try{
+
+        const respuesta=await fetch('http://localhost:3000/productos',{
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json'
+            },
+            body: JSON.stringify(nuevoProducto),
+        });
+
+        if(!respuesta.ok){
+           throw new Error('Error al crear el cliente. Estado: ',respuesta.status);
+        }
+        const productoCreado=await respuesta.json();
+        
+        console.log('Producto creado:', productoCreado);
+
+    }catch(error){
+        console.error("Error al cargar productos",error.message);
+    }
+}
+
+const cargarFormularioProductos=()=>{
     const productosForm = document.getElementById('productos-form');
     productosForm.innerHTML = `
         <form>
-            <label for="nombreProducto">Nombre del Producto:</label>
-            <input type="text" id="nombreProducto" required>
+            <label for="codigoProducto">Código del Producto:</label>
+            <input type="text" id="codigoProducto" required>
             <label for="descripcionProducto">Descripción del Producto:</label>
             <input type="text" id="descripcionProducto" required>
             <label for="precioProducto">Precio del Producto:</label>
             <input type="number" id="precioProducto" required>
             <button type="button" onclick="crearProducto()">Crear Producto</button>
-            <button type="button" onclick="mostrarListadoProducto()">Ver Listado de Productos</button>
-            <!-- Aquí se puede añadir más funcionalidad, como modificar y eliminar Productos -->
+            <button type="button" onclick="mostrarListadoProductos()">Ver Listado de Productos</button>
+            <!-- Aquí se puede añadir más funcionalidad, como modificar y eliminar productos -->
         </form>
     `;
+
     const listadoProductos = document.getElementById('listado-productos');
     listadoProductos.style.display = 'none';
 }
 
-const crearProducto = () => {
-    const nombreInput = document.getElementById('nombreProducto');
+const crearProducto=async ()=>{
+    const codigoInput = document.getElementById('codigoProducto');
     const descripcionInput = document.getElementById('descripcionProducto');
     const precioInput = document.getElementById('precioProducto');
 
-    const nombre = nombreInput.value;
+    const codigo = codigoInput.value;
     const descripcion = descripcionInput.value;
     const precio = precioInput.value;
 
-    const nuevoProducto = {
-        id: listaProductos.length + 1,
-        nombre: nombre,
-        descripcion: descripcion,
-        precio: precio
+    if (!codigo || !descripcion || !precio) {
+        alert('Por favor, completa todos los campos.');
+        return;
     }
 
-    listaProductos.push(nuevoProducto);
+    const nuevoProducto = {
+        id:listaProductos.length+1,
+        codigo: codigo,
+        descripcion: descripcion,
+        precio: precio
+    };
 
-    nombreInput.value = '';
+    
+    await guardarProducto(nuevoProducto);
+    await loadProductos();
+    console.log('Producto creado:', nuevoProducto);
+    console.log('Lista de productos:', listaProductos);
+
+    // Limpiar campos del formulario
+    codigoInput.value = '';
     descripcionInput.value = '';
     precioInput.value = '';
 
+    // Mostrar mensaje de éxito
     alert('Producto creado con éxito!');
-    console.log(listaProductos);
     actulizarProductosEnFacturas();
+    
 
     return nuevoProducto;
 
 }
 
-const mostrarListadoProducto = () => {
+const mostrarListadoProductos=async ()=>{
+    await loadProductos();
     const productosForm = document.getElementById('productos-form');
     const listadoProductos = document.getElementById('listado-productos');
 
-    productosForm.style.display = 'none';
+    // Ocultar formulario de clientes
+    document.getElementById('productos-form').style.display = 'none';
+
+    // Mostrar listado de productos
     listadoProductos.style.display = 'block';
 
+    // Crear una lista (ul) para mostrar los productos
     const ul = document.createElement('ul');
 
+    // Recorrer la lista de productos y agregar cada producto como un elemento de lista (li)
     for (const producto of listaProductos) {
         const li = document.createElement('li');
-        li.textContent = `ID: ${producto.id}, Nombre: ${producto.nombre}, descripcion: ${producto.descripcion}, precio: ${producto.precio}`;
+        li.textContent = `Código: ${producto.codigo}, Descripción: ${producto.descripcion}, Precio: ${producto.precio}`;
         ul.appendChild(li);
     }
 
+    // Limpiar el contenido anterior del contenedor de listado de productos
     listadoProductos.innerHTML = '';
+
+    // Agregar la lista al contenedor
     listadoProductos.appendChild(ul);
 
+    // Agregar botón para volver al formulario de productos
     const volverButton = document.createElement('button');
-    volverButton.textContent = 'Volver al Formulario';
-    volverButton.addEventListener('click', volverFormularioProducto);
+    volverButton.textContent = 'Volver al Formulario de Productos';
+    volverButton.addEventListener('click', volverAlFormularioProductos);
     listadoProductos.appendChild(volverButton);
-
 }
 
-const volverFormularioProducto = () => {
+const volverAlFormularioProductos=()=>{
     const productosForm = document.getElementById('productos-form');
     const listadoProductos = document.getElementById('listado-productos');
 
+    // Ocultar listado de productos
     listadoProductos.style.display = 'none';
+
+    // Mostrar formulario de productos
     productosForm.style.display = 'block';
-
 }
-
-const mostrarListadoFacturas = () => {
-    const facturasForm = document.getElementById('facturas-form');
-    const listadoFacturas = document.getElementById('listado-facturas');
-
-    // Ocultar formulario de facturas
-    facturasForm.style.display = 'none';
-
-    // Mostrar listado de facturas
-    listadoFacturas.style.display = 'block';
-
-    // Crear una lista (ul) para mostrar las facturas
-    const ul = document.createElement('ul');
-    ul.style.listStyleType = 'none';
-    ul.style.padding = '0';
-
-    // Recorrer la lista de facturas y agregar cada factura como un elemento de lista (li)
-    for (const factura of listaFacturas) {
-        const li = document.createElement('li');
-        li.style.marginBottom = '15px';
-        li.style.borderBottom = '1px solid #ccc';
-        li.style.paddingBottom = '10px';
-
-        // Comprobación para asegurarse de que factura.fecha es un objeto Date
-        const fecha = factura.fecha instanceof Date ? factura.fecha.toLocaleDateString() : 'Fecha no válida';
-
-        const fechaCliente = document.createElement('div');
-        fechaCliente.style.fontWeight = 'bold';
-        fechaCliente.textContent = `Fecha: ${fecha}, Cliente: ${factura.cliente.nombre}, Total: ${factura.total}`;
-        li.appendChild(fechaCliente);
-
-        const itemsUl = document.createElement('ul');
-        itemsUl.style.listStyleType = 'none';
-        itemsUl.style.padding = '0';
-
-        // Recorrer los items de la factura y agregar cada item como un elemento de lista (li)
-        for (const item of factura.items) {
-            const itemLi = document.createElement('li');
-            itemLi.textContent = `Producto: ${item}`;
-            itemsUl.appendChild(itemLi);
-        }
-
-        li.appendChild(itemsUl);
-        ul.appendChild(li);
-    }
-
-    // Limpiar el contenido anterior del contenedor de listado de facturas
-    listadoFacturas.innerHTML = '';
-
-    // Agregar la lista al contenedor
-    listadoFacturas.appendChild(ul);
-
-    // Agregar botón para volver al formulario de facturas
-    const volverButton = document.createElement('button');
-    volverButton.textContent = 'Volver al Formulario de Facturas';
-    volverButton.addEventListener('click', volverAlFormularioFacturas);
-    listadoFacturas.appendChild(volverButton);
-
-}
-
-const volverAlFormularioFacturas = () => {
-    const facturasForm = document.getElementById('facturas-form');
-    const listadoFacturas = document.getElementById('listado-facturas');
-
-    // Ocultar listado de facturas
-    listadoFacturas.style.display = 'none';
-
-    // Mostrar formulario de facturas
-    facturasForm.style.display = 'block';
-
-
-}
-
-
-console.log(listaProductos); 
