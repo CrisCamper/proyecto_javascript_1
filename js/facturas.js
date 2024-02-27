@@ -1,21 +1,64 @@
-const listaFacturas = [];
+const listaFacturas=[];
 
-const actulizarClientesEnFacturas = () => {
-    const clienteSelect = document.getElementById('clienteFactura');
-    clienteSelect.innerHTML = '';
-    const opcionesClientes = generarOptionsClientes();
-    clienteSelect.innerHTML = opcionesClientes;
+
+const loadFacturas= async()=>{
+    try{
+
+        const respuesta=await fetch('http://localhost:3000/facturas');
+
+        if(!respuesta.ok){
+           throw new Error('Error al cargar clientes. Estado: ',respuesta.status);
+        }
+        const facturas=await respuesta.json();
+        listaFacturas.push(...facturas);
+
+    }catch(error){
+        console.error("Error al cargar clientes",error.message);
+    }
 }
 
-const actulizarProductosEnFacturas = () => {
-    const productosSelect = document.getElementById('productosFactura');
-    productosSelect.innerHTML = '';
-    const opcionesProductos = generarOptionsProductos();
-    productosSelect.innerHTML = opcionesProductos;
+const guardarFactura= async(nuevoFactura)=>{
+    try{
+
+        const respuesta=await fetch('http://localhost:3000/facturas',{
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json'
+            },
+            body: JSON.stringify(nuevoFactura),
+        });
+
+        if(!respuesta.ok){
+           throw new Error('Error al crear el factura. Estado: ',respuesta.status);
+        }
+        const facturaCreado=await respuesta.json();
+        
+        console.log('Producto creado:', facturaCreado);
+
+    }catch(error){
+        console.error("Error al cargar factura",error.message);
+    }
 }
 
-const cargarFormularioFacturas = () => {
-    const facturasForm = document.getElementById('facturas-form');
+
+
+
+const actulizarClientesEnFacturas=()=>{
+    const clienteSelect=document.getElementById('clienteFactura');
+    clienteSelect.innerHTML='';
+    const opcionesClientes=generarOptionsClientes();
+    clienteSelect.innerHTML=opcionesClientes;
+}
+
+const actulizarProductosEnFacturas=()=>{
+    const productosSelect=document.getElementById('productosFactura');
+    productosSelect.innerHTML='';
+    const opcionesProductos=generarOptionsProductos();
+    productosSelect.innerHTML=opcionesProductos;
+}
+
+const cargarFormularioFacturas=()=>{
+    const facturasForm=document.getElementById('facturas-form');
     facturasForm.innerHTML = `
         <form>
             <label for="fechaFactura">Fecha de la Factura:</label>
@@ -44,104 +87,176 @@ const cargarFormularioFacturas = () => {
         </form>
     `;
 
-    const listaFacturas = document.getElementById('listado-facturas');
-    listaFacturas.style.display = 'none';
+    const listaFacturas=document.getElementById('listado-facturas');
+    listaFacturas.style.display='none';
 
 }
 
-const generarOptionsClientes = () => {
-    let options = '';
-    for (const cliente of listaClientes) {
-        options += `<option value="${cliente.id}">${cliente.nombre}</option>`;
+const generarOptionsClientes=()=>{
+    let options='';
+    for(const cliente of listaClientes){
+        options+=`<option value="${cliente.id}">${cliente.nombre}</option>`;
     }
     return options;
 
 }
 
-const generarOptionsProductos = () => {
-    let options = '';
-    for (const producto of listaProductos) {
-        options += `<option value="${producto.id}">${producto.descripcion}</option>`;
+const generarOptionsProductos=()=>{
+    let options='';
+    for(const producto of listaProductos){
+        options+=`<option value="${producto.codigo}">${producto.descripcion}</option>`;
     }
     return options;
 
 }
 
-const agregarItemFactura = () => {
-    const productoSelect = document.getElementById('productosFactura');
-    const cantidadInput = document.getElementById('cantidadProducto');
-    const listadoItems = document.getElementById('listado-items');
+const agregarItemFactura=()=>{
+     const productoSelect=document.getElementById('productosFactura');
+     const cantidadInput=document.getElementById('cantidadProducto');
+     const listadoItems=document.getElementById('listado-items');
 
-    const selectedProductoIndex = productoSelect.selectedIndex;
-    const cantidad = cantidadInput.value;
-
-    if (selectedProductoIndex === -1 || !cantidad) {
+     const selectedProductoIndex=productoSelect.selectedIndex;
+     const cantidad=cantidadInput.value;
+     
+     if (selectedProductoIndex === -1 || !cantidad) {
         alert('Por favor, selecciona un producto y especifica la cantidad.');
         return;
-    }
+     }
 
-    const selectProducto = listaProductos[selectedProductoIndex];
-    const subtotal = selectProducto.precio * cantidad;
+     const selectProducto=listaProductos[selectedProductoIndex];
+     const subtotal=selectProducto.precio*cantidad;
 
-    const li = document.createElement('li');
-    li.textContent = `${selectProducto.descripcion} - Cantidad: ${cantidad} - Subtotal: ${subtotal} `;
-    listadoItems.appendChild(li);
+     const li=document.createElement('li');
+     li.textContent= `${selectProducto.descripcion} - Cantidad: ${cantidad} - Subtotal: ${subtotal} `;
+     listadoItems.appendChild(li);
 
-    productoSelect.selectedIndex = -1;
-    cantidadInput.value = '';
+     productoSelect.selectedIndex=-1;
+     cantidadInput.value='';
 
 }
 
-const crearFactura = () => {
-    const fechaInput = document.getElementById('fechaFactura');
-    const clienteSelect = document.getElementById('clienteFactura');
-    const listadoItems = document.getElementById('listado-items');
+const crearFactura=()=>{
+    const fechaInput=document.getElementById('fechaFactura');
+    const clienteSelect=document.getElementById('clienteFactura');
+    const listadoItems=document.getElementById('listado-items');
 
-    const fecha = fechaInput.value;
-    const clienteId = clienteSelect.value;
-    const itemsFactura = [];
-    let totalFactura = 0;
+    const fecha=fechaInput.value;
+    const clienteId=clienteSelect.value;
+    const itemsFactura=[];
+    let totalFactura=0;
 
-    for (const li of listadoItems.getElementsByTagName('li')) {
+    for(const li of listadoItems.getElementsByTagName('li')){
         itemsFactura.push(li.textContent);
-        const cantidadMatch = li.textContent.match(/Cantidad: (\d+)/);
-        const subtotalMatch = li.textContent.match(/Subtotal: (\d+)/);
-
-        if (cantidadMatch && subtotalMatch) {
-            const cantidad = parseInt(cantidadMatch[1]);
-            const subtotal = parseInt(subtotalMatch[1]);
-            totalFactura += subtotal;
+        const cantidadMatch=li.textContent.match(/Cantidad: (\d+)/);
+        const subtotalMatch=li.textContent.match(/Subtotal: (\d+)/);
+      
+        if(cantidadMatch && subtotalMatch){
+            const cantidad=parseInt(cantidadMatch[1]);
+            const subtotal=parseInt(subtotalMatch[1]);
+            totalFactura+=subtotal;
         }
 
     }
 
-    if (!fecha || !clienteId || itemsFactura.length === 0) {
+    if(!fecha || !clienteId || itemsFactura.length===0){
         alert('Por favor, completa todos los campos y agrega al menos un item de la factura.');
         return;
     }
 
-    const cliente = listaClientes.find(c => c.id === parseInt(clienteId));
+    const cliente=listaClientes.find(c=>c.id===clienteId);
 
-
-    const nuevaFactura = {
+     
+      const nuevaFactura = {
+        id:listaFacturas.length+1,
         fecha: fecha,
         cliente: cliente,
         items: itemsFactura,
-        total: totalFactura
+        total: totalFactura 
     };
 
 
     listaFacturas.push(nuevaFactura);
+    guardarFactura(nuevaFactura);
 
     console.log("Factura creada ", nuevaFactura);
     console.log("Listado de facturas:", listaFacturas);
 
-    fechaInput.value = '';
-    clienteSelect.selectedIndex = 0;
-    listadoItems.innerHTML = '';
+    fechaInput.value='';
+    clienteSelect.selectedIndex=0;
+    listadoItems.innerHTML='';
 
     alert(`Factura creada con éxito! Total: ${totalFactura}`);
 
 }
 
+const mostrarListadoFacturas=()=>{
+    const facturasForm = document.getElementById('facturas-form');
+    const listadoFacturas = document.getElementById('listado-facturas');
 
+    // Ocultar formulario de facturas
+    facturasForm.style.display = 'none';
+
+    // Mostrar listado de facturas
+    listadoFacturas.style.display = 'block';
+
+    // Crear una lista (ul) para mostrar las facturas
+    const ul = document.createElement('ul');
+    ul.style.listStyleType = 'none';
+    ul.style.padding = '0';
+
+    // Recorrer la lista de facturas y agregar cada factura como un elemento de lista (li)
+    for (const factura of listaFacturas) {
+        const li = document.createElement('li');
+        li.style.marginBottom = '15px';
+        li.style.borderBottom = '1px solid #ccc';
+        li.style.paddingBottom = '10px';
+
+
+        const fecha = factura.fecha;
+
+        const fechaCliente = document.createElement('div');
+        fechaCliente.style.fontWeight = 'bold';
+        fechaCliente.textContent = `Fecha: ${fecha}, Cliente: ${factura.cliente.nombre}, Total: ${factura.total}`;
+        li.appendChild(fechaCliente);
+
+        const itemsUl = document.createElement('ul');
+        itemsUl.style.listStyleType = 'none';
+        itemsUl.style.padding = '0';
+        
+        // Recorrer los items de la factura y agregar cada item como un elemento de lista (li)
+        for (const item of factura.items) {
+            const itemLi = document.createElement('li');
+            itemLi.textContent = `Producto: ${item}`;
+            itemsUl.appendChild(itemLi);
+        }
+
+        li.appendChild(itemsUl);
+        ul.appendChild(li);
+    }
+
+    // Limpiar el contenido anterior del contenedor de listado de facturas
+    listadoFacturas.innerHTML = '';
+
+    // Agregar la lista al contenedor
+    listadoFacturas.appendChild(ul);
+
+    // Agregar botón para volver al formulario de facturas
+    const volverButton = document.createElement('button');
+    volverButton.textContent = 'Volver al Formulario de Facturas';
+    volverButton.addEventListener('click', volverAlFormularioFacturas);
+    listadoFacturas.appendChild(volverButton);
+
+}
+
+const volverAlFormularioFacturas=()=>{
+    const facturasForm = document.getElementById('facturas-form');
+    const listadoFacturas = document.getElementById('listado-facturas');
+
+    // Ocultar listado de facturas
+    listadoFacturas.style.display = 'none';
+
+    // Mostrar formulario de facturas
+    facturasForm.style.display = 'block';
+   
+
+}
